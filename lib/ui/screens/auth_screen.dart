@@ -138,6 +138,9 @@ class _AuthScreenState extends State<AuthScreen> {
         return;
       }
 
+      UserData userData = UserData.fromMap(user);
+      UserData.setUser(userData);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Успешный вход'),
@@ -157,5 +160,12 @@ class _AuthScreenState extends State<AuthScreen> {
         SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _emailController.dispose();
+    super.dispose();
   }
 }

@@ -1,5 +1,6 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:uuid/uuid.dart';
 
 
 class HelperDB {
@@ -68,6 +69,7 @@ class HelperDB {
     await db.execute('''
     CREATE TABLE products(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      uuid TEXT NOT NULL UNIQUE,
       title TEXT NOT NULL,
       description TEXT NOT NULL,
       link_image TEXT NOT NULL,
@@ -91,6 +93,7 @@ class HelperDB {
 
     await _insertReferencesData(db);
     await _insertUserData(db);
+    await _insertProductsData(db);
   }
 
   Future<void> _insertReferencesData(Database db) async {
@@ -109,7 +112,89 @@ class HelperDB {
     await db.insert('users', {'name': 'user', 'email': 'user@app.com', 'password': 'user123', 'role_id': 2});
   }
 
+  Future<void> _insertProductsData(Database db) async {
+    final uuid = const Uuid();
 
+    await db.insert('products', {
+      'uuid': uuid.v4(),
+      'title': 'Резиновые шлёпанцы',
+      'description': 'Лёгкие и удобные шлёпанцы для дома, пляжа и повседневной носки. '
+          'Изготовлены из мягкого материала, который не натирает ногу и хорошо держит форму. '
+          'Подходят для длительной ходьбы и быстро высыхают после воды.',
+      'link_image': 'assets/images/cart1.png',
+      'status_id': 1,
+    });
+
+    await db.insert('products', {
+      'uuid': uuid.v4(),
+      'title': 'Спортивная футболка',
+      'description': 'Дышащая футболка из лёгкой ткани, предназначенная для спорта и активного отдыха. '
+          'Материал хорошо отводит влагу и позволяет коже дышать даже при интенсивных тренировках. '
+          'Идеально подходит для занятий в зале и на улице.',
+      'link_image': 'assets/images/cart2.png',
+      'status_id': 1,
+    });
+
+    await db.insert('products', {
+      'uuid': uuid.v4(),
+      'title': 'Городской рюкзак',
+      'description': 'Компактный рюкзак для повседневного использования. '
+          'Имеет несколько отделений для ноутбука, документов и личных вещей. '
+          'Прочные молнии и удобные регулируемые лямки делают его отличным выбором для работы или учёбы.',
+      'link_image': 'assets/images/cart3.png',
+      'status_id': 1,
+    });
+
+    await db.insert('products', {
+      'uuid': uuid.v4(),
+      'title': 'Беспроводные наушники',
+      'description': 'Современные Bluetooth-наушники с чистым звучанием и удобной посадкой. '
+          'Поддерживают быстрое подключение к смартфону и работают до 6 часов без подзарядки. '
+          'Подходят для прослушивания музыки, подкастов и общения.',
+      'link_image': 'assets/images/cart4.png',
+      'status_id': 1,
+    });
+
+    await db.insert('products', {
+      'uuid': uuid.v4(),
+      'title': 'Умные часы',
+      'description': 'Функциональные смарт-часы с мониторингом активности и уведомлениями со смартфона. '
+          'Отслеживают шаги, пульс и уровень физической активности. '
+          'Стильный дизайн позволяет носить их как на тренировке, так и в повседневной жизни.',
+      'link_image': 'assets/images/cart5.png',
+      'status_id': 1,
+    });
+
+    await db.insert('products', {
+      'uuid': uuid.v4(),
+      'title': 'Портативная колонка',
+      'description': 'Компактная беспроводная колонка с мощным звучанием. '
+          'Легко подключается к телефону через Bluetooth и обеспечивает стабильное соединение. '
+          'Подходит для прогулок, поездок и отдыха на природе.',
+      'link_image': 'assets/images/cart6.png',
+      'status_id': 1,
+    });
+
+    await db.insert('products', {
+      'uuid': uuid.v4(),
+      'title': 'Кружка с термоизоляцией',
+      'description': 'Термокружка из нержавеющей стали, сохраняющая температуру напитков '
+          'в течение нескольких часов. Удобная крышка предотвращает проливание, '
+          'а компактный размер позволяет брать её с собой в дорогу.',
+      'link_image': 'assets/images/cart7.png',
+      'status_id': 2,
+    });
+
+    await db.insert('products', {
+      'uuid': uuid.v4(),
+      'title': 'Настольная лампа',
+      'description': 'Современная настольная лампа с регулируемой яркостью. '
+          'Подходит для работы, учёбы или чтения вечером. '
+          'Минималистичный дизайн хорошо вписывается в интерьер рабочего стола.',
+      'link_image': 'assets/images/cart8.png',
+      'status_id': 1,
+    });
+  }
 
   //Functions
 
@@ -202,6 +287,7 @@ class HelperDB {
 
 
   Future<int> insertProduct({
+    required String uuid,
     required String title,
     required String description,
     required String linkImage,
@@ -209,6 +295,7 @@ class HelperDB {
   }) async {
     final db = await database;
     return db.insert('products', {
+      'uuid': uuid,
       'title': title,
       'description': description,
       'link_image': linkImage,

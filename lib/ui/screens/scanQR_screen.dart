@@ -106,11 +106,11 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
   ProductData? _findProductByQr(String raw) {
     try {
       final map = jsonDecode(raw) as Map<String, dynamic>;
-      final int? id = map['id'] is int ? map['id'] as int : int.tryParse('${map['id']}');
-      if (id == null) return null;
+      final String? uuid = map['uuid']?.toString();
+      if (uuid == null || uuid.trim().isEmpty) return null;
 
-      for (final p in products) {
-        if (p.id == id) return p;
+      for (final p in ProductData.getProducts()) {
+        if (p.uuid == uuid) return p;
       }
       return null;
     } catch (_) {
@@ -154,6 +154,12 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
   void initState() {
     super.initState();
     _requestCameraPermission();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
 }

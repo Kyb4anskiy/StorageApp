@@ -84,7 +84,7 @@ class _ProductScreen extends State<ProductScreen> {
                 child: QrImageView(
                   data: _qrData!,
                   version: QrVersions.auto,
-                  size: 220,
+                  size: 300,
                 ),
               ),
               ],
@@ -124,12 +124,11 @@ class _ProductScreen extends State<ProductScreen> {
 
   void _generateQr() {
 
-    final payload = {
-      'id': product.id,
-      'title': product.title,
-      'description': product.description,
-      'isActive': product.isActive,
-    };
+    final payload = ProductData.toQRString(
+        uuid: product.uuid,
+        title: product.title,
+        description: product.description
+    );
 
     setState(() {
       _qrData = jsonEncode(payload);

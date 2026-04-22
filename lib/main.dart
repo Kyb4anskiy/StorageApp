@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Dev Flutter App',
       theme: MainTheme.light,
-      home: const RegistrationScreen(),
+      home: const HomeScreen(),
     );
   }
 }

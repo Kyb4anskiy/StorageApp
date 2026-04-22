@@ -1,12 +1,12 @@
-﻿import 'dart:convert';
-
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_app/ui/screens/product_screen.dart';
 import 'package:flutter_app/ui/screens/scanQR_screen.dart';
 import 'package:flutter_app/ui/widgets/productCart.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../data/HelperDB.dart';
 import '../../domain/models/ProductData.dart';
+import '../../domain/models/UserData.dart';
 import 'add_product_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,6 +19,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
 
+  List<ProductData> _products = [];
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(builder: (context) => AddProductScreen()),
               );
               if (result == true) {
-                setState(() {});
+                await _loadProducts();
               }
             },
           ),
@@ -76,12 +77,12 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                'Товаров в каталоге: ${products.length}',
+                'Товаров в каталоге: ${_products.length}',
                 style: theme.textTheme.bodyLarge?.copyWith(fontSize: 18),
               ),
               const SizedBox(height: 4),
               GridView.builder(
-                itemCount: products.length,
+                itemCount: _products.length,
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -91,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   childAspectRatio: 0.45,
                 ),
                 itemBuilder: (context, index) {
-                  final product = products[index];
+                  final product = _products[index];
                   return ProductCart(
                     product: product,
                     onTap: () => openProductCard(product),
@@ -110,6 +111,26 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => ProductScreen(product: product),
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      final rows = await HelperDB.instance.getAllProducts();
+      setState(() {
+        _products = rows.map((p) => ProductData.fromMap(p)).toList();
+        ProductData.setProducts(_products);
+      });
+    } catch (e){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
 }

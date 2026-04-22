@@ -3,10 +3,12 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/data/HelperDB.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../domain/models/ProductData.dart';
 
@@ -27,6 +29,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   String? _qrData;
   PlatformFile? _pickedFile;
   String? _imageError;
+  static const _uuid = Uuid();
+  final _newUuid = _uuid.v4();
 
   @override
   Widget build(BuildContext context) {
@@ -162,12 +166,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     if (!formValid || !hasImage) return;
 
-    final payload = {
-      'id': products.length+1,
-      'title': _titleController.text,
-      'description': _descriptionController.text,
-      'isActive': _isActive,
-    };
+    final payload = ProductData.toQRString(
+      uuid: _newUuid,
+      title: _titleController.text,
+      description: _descriptionController.text
+    );
 
     setState(() {
       _qrData = jsonEncode(payload);
@@ -187,22 +190,26 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     final imagePath = await _storeImagePermanently(_pickedFile!);
 
-    products.add(
-      ProductData(
-        id: products.length + 1,
-        title: _titleController.text,
-        description: _descriptionController.text,
-        linkImage: imagePath,
-        isActive: _isActive),
-    );
+    try{
+      await HelperDB.instance.insertProduct(
+          uuid: _newUuid,
+          title: _titleController.text,
+          description: _descriptionController.text,
+          linkImage: imagePath,
+          statusId: _isActive ? 1 : 2);
 
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('Товар сохранен'),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2)),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Товар сохранен'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2)),
+      );
 
-    Navigator.pop(context, true);
+      Navigator.pop(context, true);
+    }catch (e){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Future<String> _storeImagePermanently(PlatformFile file) async {
