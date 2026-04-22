@@ -10,9 +10,8 @@ class UserData {
 });
 }
 
-List<UserData> users = [
-  UserData(login: '1111', email: '1@1.1', password: '123123'),
-  UserData(login: '1', email: '1@1.1', password: '1'),
-
-];
+// List<UserData> users = [
+//   UserData(login: '1111', email: '1@1.1', password: '123123'),
+//   UserData(login: '1', email: '1@1.1', password: '1'),
+// ];
 

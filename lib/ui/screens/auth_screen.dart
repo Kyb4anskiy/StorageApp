@@ -1,7 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter_app/domain/models/UserData.dart';
 import 'package:flutter_app/ui/screens/home_screen.dart';
-import 'package:flutter_app/ui/screens/register_screen.dart';
+import 'package:flutter_app/ui/screens/registration_screen.dart';
+
+import '../../data/HelperDB.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -11,7 +13,7 @@ class AuthScreen extends StatefulWidget {
 }
 
 class _AuthScreenState extends State<AuthScreen> {
-  final _loginController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
@@ -48,21 +50,15 @@ class _AuthScreenState extends State<AuthScreen> {
                                 ),
                                 const SizedBox(height: 15),
                                 TextFormField(
-                                  controller: _loginController,
+                                  controller: _emailController,
                                   decoration: InputDecoration(
-                                    labelText: "Логин",
+                                    labelText: "Почта",
                                   ),
                                   validator: (value) {
                                     final text = (value ?? '');
                                     if (text.isEmpty) {
-                                      return 'Введите логин';
+                                      return 'Введите почту';
                                     }
-                                    if (text.contains(' ')) {
-                                      return 'Пробелы недопустимы';
-                                    }
-                                    // if (text.length < 4) {
-                                    //   return 'Логин содержит не менее 4 символов';
-                                    // }
                                     return null;
                                   },
                                 ),
@@ -78,9 +74,6 @@ class _AuthScreenState extends State<AuthScreen> {
                                     if (text.isEmpty) {
                                       return 'Введите пароль';
                                     }
-                                    // if (text.length < 6) {
-                                    //   return 'Пароль содержит не менее 6 символов';
-                                    // }
                                     return null;
                                   },
                                 ),
@@ -119,39 +112,50 @@ class _AuthScreenState extends State<AuthScreen> {
   void noAccount() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => RegisterScreen()),
+      MaterialPageRoute(builder: (context) => RegistrationScreen()),
     );
   }
 
-  void authorization() {
-    if (_formKey.currentState?.validate() ?? true) {
-        for (var user in users) {
-        if (_loginController.text == user.login &&
-            _passwordController.text == user.password) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Успешный вход"),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => HomeScreen()),
-                (route) => false,
-          );
-          return;
-          }
-        }
+  Future<void> authorization() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    try {
+      final user = await HelperDB.instance.getUserByEmailAndPassword(
+          email: email,
+          password: password
+      );
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Неверная почта или пароль'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 1),
+          )
+        );
+        return;
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Неверные логин или пароль!"),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 1),
-        ),
+        const SnackBar(
+          content: Text('Успешный вход'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        )
       );
-      return;
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => HomeScreen()),
+            (route) => false,
+      );
+      
+    } catch (e){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 }

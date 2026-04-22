@@ -1,15 +1,17 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:flutter_app/data/HelperDB.dart';
 import 'package:flutter_app/domain/models/UserData.dart';
 import 'package:flutter_app/ui/screens/auth_screen.dart';
+import 'package:sqflite/sqflite.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class RegistrationScreen extends StatefulWidget {
+  const RegistrationScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<RegistrationScreen> createState() => _RegistrationScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegistrationScreenState extends State<RegistrationScreen> {
   final _loginController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -61,9 +63,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   if (text.contains(' ')) {
                                     return 'Пробелы недопустимы';
                                   }
-                                  // if (text.length < 4) {
-                                  //   return 'Логин должен быть не менее 4 символов';
-                                  // }
+                                  if (text.length < 4) {
+                                    return 'Логин должен быть не менее 4 символов';
+                                  }
                                   return null;
                                 },
                               ),
@@ -80,9 +82,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     return 'Введите почту';
                                   }
                                   final emailRegex = RegExp(r'^[\w\.-]+@[\w\.-]+\.[\w\.-]+$');
-                                  // if (!emailRegex.hasMatch(text)) {
-                                  //   return 'Введите корректную почту';
-                                  // }
+                                  if (!emailRegex.hasMatch(text)) {
+                                    return 'Введите корректную почту';
+                                  }
                                   return null;
                                 },
                               ),
@@ -98,9 +100,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   if (text.isEmpty) {
                                     return 'Введите пароль';
                                   }
-                                  // if (text.length < 6) {
-                                  //   return 'Пароль должен быть не менее 6 символов';
-                                  // }
+                                  if (text.length < 6) {
+                                    return 'Пароль должен быть не менее 6 символов';
+                                  }
                                   return null;
                                 },
                               ),
@@ -154,8 +156,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (context) => const AuthScreen()));
   }
 
-  void registration() {
-    if (_formKey.currentState?.validate() ?? false) {
+  Future<void> registration() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final email = _emailController.text.trim();
+    try {
+      if (await HelperDB.instance.isEmailExists(email)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Пользователь с такой почтой уже существует'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 2),
+            )
+        );
+        return;
+      }
+
+      final roleId = await HelperDB.instance.getRoleIdByCode('user');
+      if (roleId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Что то пошло не так. Попробуйте позже'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 2),
+            )
+        );
+        return;
+      }
+
+      await HelperDB.instance.insertUser(
+        name: _loginController.text.trim(),
+        email: email,
+        password: _passwordController.text,
+        roleId: roleId,
+      );
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Успешная регистрация'),
@@ -164,16 +199,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       );
 
-      users.add(
-        UserData(
-          login: _loginController.text,
-          email: _emailController.text,
-          password: _passwordController.text,
-        ),
+      Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AuthScreen())
       );
 
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const AuthScreen()));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
+      );
     }
+
   }
 
   @override
