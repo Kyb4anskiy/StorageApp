@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../data/HelperDB.dart';
 import '../../domain/models/ProductData.dart';
+import '../../domain/models/UserData.dart';
 
 class ScanQrScreen extends StatefulWidget {
   const ScanQrScreen({super.key});
@@ -27,6 +29,16 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Сканирование QR'),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              await openAppSettings();
+            },
+            icon: Icon(
+              Icons.settings
+            ),
+          ),
+        ]
       ),
       body: SafeArea(
         child: !_cameraGranted ? Center(
@@ -103,22 +115,22 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
     });
   }
 
-  ProductData? _findProductByQr(String raw) {
+  Future<ProductData?> _findProductByQr(String raw) async {
     try {
       final map = jsonDecode(raw) as Map<String, dynamic>;
       final String? uuid = map['uuid']?.toString();
-      if (uuid == null || uuid.trim().isEmpty) return null;
+      if (uuid == null || uuid.isEmpty) return null;
 
-      for (final p in ProductData.getProducts()) {
-        if (p.uuid == uuid) return p;
-      }
-      return null;
+      final row = await HelperDB.instance.getProductByUuid(uuid);
+      if (row == null) return null;
+      return ProductData.fromMap(row);
     } catch (_) {
       return null;
     }
   }
 
-  void _onDetect(BarcodeCapture capture) {
+
+  Future<void> _onDetect(BarcodeCapture capture) async {
     if (_handled) return;
 
     final barcodes = capture.barcodes;
@@ -133,13 +145,73 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
       return;
     }
 
-    final found = _findProductByQr(raw);
+    final found = await _findProductByQr(raw);
+
+    if (found != null){
+      try {
+
+        if (UserData.getUser()?.roleId == await HelperDB.instance.getRoleIdByCode("admin")){
+          await _applyScanAction(found);
+
+          final updatedMap = await HelperDB.instance.getProductById(found.id);
+          if (updatedMap == null) return;
+
+          final updatedProduct = ProductData.fromMap(updatedMap);
+
+          setState(() {
+            _handled = true;
+            _foundProduct = updatedProduct;
+            _statusText = found.isActive
+                ? 'Товар выдан'
+                : 'Товар возвращён';
+          });
+          return;
+        }
+
+        setState(() {
+          _handled = true;
+          _foundProduct = found;
+          _statusText = 'Товар найден';
+        });
+
+        return;
+      } catch (e){
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
 
     setState(() {
       _handled = true;
-      _foundProduct = found;
-      _statusText = found != null ? 'Товар найден' : 'Не удалось найти товар';
+      _statusText = 'Не удалось найти товар';
     });
+  }
+
+  Future<void> _applyScanAction(ProductData product) async {
+    final db = HelperDB.instance;
+
+    final int takeActionId = await db.getActionTypeIdByCode('take');
+    final int returnActionId = await db.getActionTypeIdByCode('return');
+    final int availableStatusId = await db.getStatusIdByCode('in_stock');
+    final int unavailableStatusId = await db.getStatusIdByCode('out_of_stock');
+
+    final bool isNowAvailable = product.isActive;
+
+    final int newStatusId = isNowAvailable ? unavailableStatusId : availableStatusId;
+    final int newActionTypeId = isNowAvailable ? takeActionId : returnActionId;
+
+    await db.updateProductStatus(
+        productId: product.id,
+        statusId: newStatusId
+    );
+
+    await db.insertAction(
+      productId: product.id,
+      userId: UserData.getUser()!.id,
+      actionTypeId: newActionTypeId,
+      createdAt: DateTime.now().toIso8601String(),
+    );
   }
 
   void _scanAgain() {

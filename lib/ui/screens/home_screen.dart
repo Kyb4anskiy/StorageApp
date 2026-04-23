@@ -7,7 +7,9 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../data/HelperDB.dart';
 import '../../domain/models/ProductData.dart';
 import '../../domain/models/UserData.dart';
+import '../../main.dart';
 import 'add_product_screen.dart';
+import 'auth_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +19,7 @@ class HomeScreen extends StatefulWidget {
 
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   List<ProductData> _products = [];
 
@@ -45,27 +47,25 @@ class _HomeScreenState extends State<HomeScreen> {
               }
             },
           ),
-          IconButton(
-            icon: Icon(Icons.add),
-            tooltip: 'Добавить товар',
-            onPressed: () async {
-              final result = await Navigator.push(
+          if (UserData.getUser()?.roleId == 1)
+            IconButton(
+              icon: Icon(Icons.add),
+              tooltip: 'Добавить товар',
+              onPressed: () async {
+                final result = await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AddProductScreen()),
-              );
-              if (result == true) {
-                await _loadProducts();
-              }
-            },
-          ),
+                  MaterialPageRoute(builder: (context) => AddProductScreen()),
+                );
+                if (result == true) {
+                  await _loadProducts();
+                }
+              },
+            ),
           IconButton(
-            onPressed: () async {
-              await openAppSettings();
-            },
+            onPressed: logOut,
             icon: Icon(
-              Icons.lock_reset_outlined,
-              size: 16,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              Icons.logout,
+              size: 22,
             ),
           ),
         ],
@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisCount: 2,
                   crossAxisSpacing: 5,
                   mainAxisSpacing: 5,
-                  childAspectRatio: 0.45,
+                  childAspectRatio: 0.49,
                 ),
                 itemBuilder: (context, index) {
                   final product = _products[index];
@@ -113,9 +113,32 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void logOut(){
+    UserData.clear();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const AuthScreen()),
+          (route) => false,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadProducts();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void didPopNext() {
     _loadProducts();
   }
 
@@ -124,7 +147,6 @@ class _HomeScreenState extends State<HomeScreen> {
       final rows = await HelperDB.instance.getAllProducts();
       setState(() {
         _products = rows.map((p) => ProductData.fromMap(p)).toList();
-        ProductData.setProducts(_products);
       });
     } catch (e){
       ScaffoldMessenger.of(context).showSnackBar(

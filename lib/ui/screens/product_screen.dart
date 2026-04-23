@@ -63,7 +63,7 @@ class _ProductScreen extends State<ProductScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 15),
               Chip(
                 label: Text(isActive ? 'Есть в наличии' : 'Нет в наличии'),
                 avatar: Icon(
@@ -71,22 +71,23 @@ class _ProductScreen extends State<ProductScreen> {
                   color: isActive ? Colors.green : Colors.red,
                 ),
               ),
-            SizedBox(
-              height: 46,
-              child: ElevatedButton(
-                onPressed: _generateQr,
-                child: Text('Сгенерировать QR'),
-              ),
-            ),
-            if (_qrData != null) ...[
-              const SizedBox(height: 16),
-              Center(
-                child: QrImageView(
-                  data: _qrData!,
-                  version: QrVersions.auto,
-                  size: 300,
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: _generateQr,
+                  child: Text('Сгенерировать QR'),
                 ),
               ),
+              if (_qrData != null) ...[
+                const SizedBox(height: 16),
+                Center(
+                  child: QrImageView(
+                    data: _qrData!,
+                    version: QrVersions.auto,
+                    size: 300,
+                  ),
+                ),
               ],
             ],
           ),

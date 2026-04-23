@@ -6,11 +6,15 @@ import 'package:flutter_app/ui/themes/MainTheme.dart';
 
 import 'ui/screens/auth_screen.dart';
 
+final RouteObserver<ModalRoute<void>> routeObserver =
+RouteObserver<ModalRoute<void>>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await HelperDB.instance.database;
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -20,7 +24,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Dev Flutter App',
       theme: MainTheme.light,
-      home: const HomeScreen(),
+      home: const AuthScreen(),
+      navigatorObservers: [routeObserver],
     );
   }
 }

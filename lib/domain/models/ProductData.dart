@@ -1,27 +1,12 @@
 
 class ProductData {
 
-  static List<ProductData> _listAllProducts = [];
-
   int id;
   String uuid;
   String title;
   String description;
   bool isActive;
   String linkImage;
-
-
-  static void setProducts(List<ProductData> products) {
-    _listAllProducts = products;
-  }
-
-  static List<ProductData> getProducts() {
-    return _listAllProducts;
-  }
-
-  static void clear() {
-    _listAllProducts = [];
-  }
 
   ProductData({
     required this.id,

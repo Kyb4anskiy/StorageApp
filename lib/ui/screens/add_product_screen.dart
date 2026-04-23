@@ -35,7 +35,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Добавление товара')),
+      appBar: AppBar(
+        title: Text('Добавление товара'),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              await openAppSettings();
+            },
+            icon: Icon(
+                Icons.settings
+            ),
+          ),
+        ]
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.all(16),

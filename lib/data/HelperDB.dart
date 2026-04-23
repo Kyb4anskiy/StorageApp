@@ -198,7 +198,7 @@ class HelperDB {
 
   //Functions
 
-  Future<int?> getRoleIdByCode(String code) async {
+  Future<int> getRoleIdByCode(String code) async {
     final db = await database;
     final rows = await db.query(
       'roles',
@@ -207,11 +207,10 @@ class HelperDB {
       whereArgs: [code],
       limit: 1,
     );
-    if (rows.isEmpty) return null;
     return rows.first['id'] as int;
   }
 
-  Future<int?> getStatusIdByCode(String code) async {
+  Future<int> getStatusIdByCode(String code) async {
     final db = await database;
     final rows = await db.query(
       'product_statuses',
@@ -220,11 +219,10 @@ class HelperDB {
       whereArgs: [code],
       limit: 1,
     );
-    if (rows.isEmpty) return null;
     return rows.first['id'] as int;
   }
 
-  Future<int?> getActionTypeIdByCode(String code) async {
+  Future<int> getActionTypeIdByCode(String code) async {
     final db = await database;
     final rows = await db.query(
       'action_types',
@@ -233,7 +231,6 @@ class HelperDB {
       whereArgs: [code],
       limit: 1,
     );
-    if (rows.isEmpty) return null;
     return rows.first['id'] as int;
   }
 
@@ -308,6 +305,18 @@ class HelperDB {
     return db.query('products', orderBy: 'id DESC');
   }
 
+  Future<Map<String, dynamic>?> getProductByUuid(String uuid) async {
+    final db = await database;
+    final rows = await db.query(
+      'products',
+      where: 'uuid = ?',
+      whereArgs: [uuid],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return rows.first;
+  }
+
   Future<Map<String, dynamic>?> getProductById(int id) async {
     final db = await database;
     final rows = await db.query(
@@ -349,14 +358,6 @@ class HelperDB {
     });
   }
 
-  Future<List<Map<String, dynamic>>> getActionsByProduct(int productId) async {
-    final db = await database;
-    return db.query(
-      'actions',
-      where: 'product_id = ?',
-      whereArgs: [productId],
-      orderBy: 'id DESC',
-    );
-  }
+
 
 }

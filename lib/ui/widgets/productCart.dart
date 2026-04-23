@@ -66,11 +66,6 @@ class ProductCart extends StatelessWidget {
                   size: 18,
                 ),
               ),
-              Text(
-                'id ${product.id}',
-                style: theme.textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 2),
             ],
           ),
         ),
