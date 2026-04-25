@@ -150,31 +150,30 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
     if (found != null){
       try {
 
-        if (UserData.getUser()?.roleId == await HelperDB.instance.getRoleIdByCode("admin")){
-          await _applyScanAction(found);
-
-          final updatedMap = await HelperDB.instance.getProductById(found.id);
-          if (updatedMap == null) return;
-
-          final updatedProduct = ProductData.fromMap(updatedMap);
-
+        if (!(await _canReturnProduct(found))){
           setState(() {
             _handled = true;
-            _foundProduct = updatedProduct;
-            _statusText = found.isActive
-                ? 'Товар выдан'
-                : 'Товар возвращён';
+            _statusText = 'Товар не может быть возвращен';
           });
           return;
         }
 
+        await _applyScanAction(found);
+
+        final updatedMap = await HelperDB.instance.getProductById(found.id);
+        if (updatedMap == null) return;
+
+        final updatedProduct = ProductData.fromMap(updatedMap);
+
         setState(() {
           _handled = true;
-          _foundProduct = found;
-          _statusText = 'Товар найден';
+          _foundProduct = updatedProduct;
+          _statusText = found.isActive
+              ? 'Товар выдан'
+              : 'Товар возвращён';
         });
-
         return;
+
       } catch (e){
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
@@ -212,6 +211,18 @@ class _ScanQrScreenState extends State<ScanQrScreen> {
       actionTypeId: newActionTypeId,
       createdAt: DateTime.now().toIso8601String(),
     );
+  }
+
+
+  Future<bool> _canReturnProduct(ProductData product) async{
+
+    if (!product.isActive) {
+      final int? userId = await HelperDB.instance.getLastUserIdByProductId(product.id);
+      if (userId != null && userId != UserData.getUser()?.id){
+        return false;
+      }
+    }
+    return true;
   }
 
   void _scanAgain() {

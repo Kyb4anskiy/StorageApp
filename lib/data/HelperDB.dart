@@ -109,6 +109,8 @@ class HelperDB {
 
   Future<void> _insertUserData(Database db) async {
     await db.insert('users', {'name': 'admin', 'email': 'admin@app.com', 'password': 'admin123', 'role_id': 1});
+    await db.insert('users', {'name': 'admin', 'email': 'admin1@app.com', 'password': 'admin123', 'role_id': 1});
+    await db.insert('users', {'name': 'admin', 'email': 'admin2@app.com', 'password': 'admin123', 'role_id': 1});
     await db.insert('users', {'name': 'user', 'email': 'user@app.com', 'password': 'user123', 'role_id': 2});
   }
 
@@ -329,6 +331,21 @@ class HelperDB {
     return rows.first;
   }
 
+  Future<int?> getLastUserIdByProductId(int productId) async {
+    final db = await database;
+    final rows = await db.query(
+      'actions',
+      columns: ['user_id'],
+      where: 'product_id = ?',
+      whereArgs: [productId],
+      orderBy: 'created_at DESC',
+      limit: 1,
+    );
+
+    if (rows.isEmpty) return null;
+    return rows.first['user_id'] as int;
+  }
+
   Future<int> updateProductStatus({
     required int productId,
     required int statusId,
@@ -341,7 +358,6 @@ class HelperDB {
       whereArgs: [productId],
     );
   }
-
 
   Future<int> insertAction({
     required int productId,
